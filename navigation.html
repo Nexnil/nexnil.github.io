@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式导航网站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .tab-active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .overlay {
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 汉堡菜单按钮 -->
+    <button id="menu-btn" class="fixed top-4 left-4 z-50 md:hidden bg-white shadow-lg p-2 rounded-lg hover:bg-gray-100 transition-colors">
+        <i class="fa fa-bars text-gray-700"></i>
+    </button>
+
+    <!-- 遮罩层 -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+    <!-- 左侧导航栏 -->
+    <aside id="sidebar" class="sidebar fixed left-0 top-0 h-screen w-64 bg-white shadow-lg z-50 transform -translate-x-full md:translate-x-0">
+        <!-- Logo -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center">
+                <i class="fa fa-compass text-blue-500 text-2xl"></i>
+                <span class="ml-3 text-xl font-bold text-gray-800">导航中心</span>
+            </div>
+        </div>
+        
+        <!-- 导航按钮 -->
+        <nav class="p-4">
+            <ul class="space-y-2">
+                <li>
+                    <a href="#category1" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
+                        <i class="fa fa-home mr-3"></i>
+                        <span>首页导航</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#category2" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
+                        <i class="fa fa-briefcase mr-3"></i>
+                        <span>工作工具</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#category3" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
+                        <i class="fa fa-graduation-cap mr-3"></i>
+                        <span>学习资源</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#category4" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
+                        <i class="fa fa-shopping-cart mr-3"></i>
+                        <span>购物消费</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#category5" class="nav-link flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 text-gray-700 transition-all">
+                        <i class="fa fa-gamepad mr-3"></i>
+                        <span>娱乐休闲</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- 右侧内容区 -->
+    <main class="md:ml-64 min-h-screen">
+        <!-- 顶部搜索区 -->
+        <header class="sticky top-0 bg-white shadow-sm z-30">
+            <div class="max-w-6xl mx-auto px-4 py-4">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <!-- 搜索引擎切换 -->
+                    <div class="flex items-center">
+                        <select id="search-engine" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="baidu">百度</option>
+                            <option value="google">Google</option>
+                            <option value="bing">必应</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 搜索输入框 -->
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="search-input"
+                            placeholder="搜索..." 
+                            class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                        <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <button id="search-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600 transition-colors">
+                            搜索
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 内容展示区 -->
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <!-- 分类1：首页导航 -->
+            <section id="category1" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-home text-blue-500 mr-3"></i>
+                    首页导航
+                </h2>
+                
+                <!-- 二级分类标签 -->
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab1-1">综合门户</button>
+                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab1-2">新闻资讯</button>
+                </div>
+                
+                <!-- 卡片网格 -->
+                <div class="tab-content" id="tab1-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.baidu.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-search text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">百度</h3>
+                                    <p class="text-sm text-gray-500">全球最大的中文搜索引擎</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-comment text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">腾讯网</h3>
+                                    <p class="text-sm text-gray-500">腾讯旗下综合门户网站</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.sina.com.cn" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-newspaper-o text-red-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">新浪网</h3>
+                                    <p class="text-sm text-gray-500">领先的中文门户网站</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="tab1-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://news.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-newspaper-o text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">腾讯新闻</h3>
+                                    <p class="text-sm text-gray-500">最新新闻资讯</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://news.sina.com.cn" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-newspaper-o text-red-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">新浪新闻</h3>
+                                    <p class="text-sm text-gray-500">全天候新闻报道</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.xinhuanet.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-globe text-red-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">新华网</h3>
+                                    <p class="text-sm text-gray-500">权威新闻发布平台</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类2：工作工具 -->
+            <section id="category2" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-briefcase text-blue-500 mr-3"></i>
+                    工作工具
+                </h2>
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab2-1">办公协作</button>
+                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab2-2">开发工具</button>
+                </div>
+                
+                <div class="tab-content" id="tab2-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://docs.google.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-file-text text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Google Docs</h3>
+                                    <p class="text-sm text-gray-500">在线文档编辑</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.trello.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-list-checks text-purple-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Trello</h3>
+                                    <p class="text-sm text-gray-500">项目管理工具</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://slack.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-comments text-purple-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Slack</h3>
+                                    <p class="text-sm text-gray-500">团队协作沟通</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="tab2-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://github.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-github text-white text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">GitHub</h3>
+                                    <p class="text-sm text-gray-500">代码托管平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://codepen.io" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-code text-white text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">CodePen</h3>
+                                    <p class="text-sm text-gray-500">前端代码演示</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://jsfiddle.net" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-code text-white text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">JSFiddle</h3>
+                                    <p class="text-sm text-gray-500">在线代码测试</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类3：学习资源 -->
+            <section id="category3" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-graduation-cap text-blue-500 mr-3"></i>
+                    学习资源
+                </h2>
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab3-1">在线课程</button>
+                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab3-2">技术文档</button>
+                </div>
+                
+                <div class="tab-content" id="tab3-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.coursera.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-graduation-cap text-green-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Coursera</h3>
+                                    <p class="text-sm text-gray-500">全球名校课程</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.edx.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-university text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">edX</h3>
+                                    <p class="text-sm text-gray-500">顶尖学府在线课程</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.udemy.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-book text-purple-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Udemy</h3>
+                                    <p class="text-sm text-gray-500">海量在线课程</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="tab3-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://developer.mozilla.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-code text-orange-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">MDN Web Docs</h3>
+                                    <p class="text-sm text-gray-500">Web开发权威文档</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://docs.python.org" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-code text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Python Docs</h3>
+                                    <p class="text-sm text-gray-500">Python官方文档</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://react.dev" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-code text-cyan-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">React Docs</h3>
+                                    <p class="text-sm text-gray-500">React官方文档</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类4：购物消费 -->
+            <section id="category4" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-shopping-cart text-blue-500 mr-3"></i>
+                    购物消费
+                </h2>
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab4-1">综合电商</button>
+                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab4-2">生鲜食品</button>
+                </div>
+                
+                <div class="tab-content" id="tab4-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.taobao.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-shopping-bag text-orange-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">淘宝</h3>
+                                    <p class="text-sm text-gray-500">一站式购物平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.jd.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-truck text-red-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">京东</h3>
+                                    <p class="text-sm text-gray-500">正品低价快速配送</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.pinduoduo.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-users text-yellow-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">拼多多</h3>
+                                    <p class="text-sm text-gray-500">社交电商新选择</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="tab4-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.meituan.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-utensils text-yellow-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">美团</h3>
+                                    <p class="text-sm text-gray-500">美食外卖平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.ele.me" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-utensils text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">饿了么</h3>
+                                    <p class="text-sm text-gray-500">外卖订餐服务</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://fresh.taobao.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-leaf text-green-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">淘宝生鲜</h3>
+                                    <p class="text-sm text-gray-500">新鲜直达</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类5：娱乐休闲 -->
+            <section id="category5" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fa fa-gamepad text-blue-500 mr-3"></i>
+                    娱乐休闲
+                </h2>
+                
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button class="tab-btn tab-active px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab5-1">视频娱乐</button>
+                    <button class="tab-btn px-6 py-3 font-medium border-b-2 border-transparent hover:text-blue-500 transition-colors" data-tab="tab5-2">游戏平台</button>
+                </div>
+                
+                <div class="tab-content" id="tab5-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.youtube.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-play text-red-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">YouTube</h3>
+                                    <p class="text-sm text-gray-500">全球最大视频平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.bilibili.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-play-circle text-pink-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">哔哩哔哩</h3>
+                                    <p class="text-sm text-gray-500">年轻人喜爱的视频社区</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://v.qq.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-video text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">腾讯视频</h3>
+                                    <p class="text-sm text-gray-500">海量影视内容</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="tab5-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="https://www.steam.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-gamepad text-blue-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Steam</h3>
+                                    <p class="text-sm text-gray-500">全球最大游戏平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.epicgames.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-gamepad text-white text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">Epic Games</h3>
+                                    <p class="text-sm text-gray-500">免费游戏领取平台</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="https://www.wegame.com" target="_blank" class="card bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa fa-gamepad text-green-500 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-gray-800">WeGame</h3>
+                                    <p class="text-sm text-gray-500">腾讯游戏平台</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        // DOM元素
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const searchBtn = document.getElementById('search-btn');
+        const searchInput = document.getElementById('search-input');
+        const searchEngine = document.getElementById('search-engine');
+
+        // 汉堡菜单切换
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            overlay.classList.toggle('hidden');
+        });
+
+        // 点击遮罩层关闭侧边栏
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            overlay.classList.add('hidden');
+        });
+
+        // 点击侧边栏导航链接关闭侧边栏（移动端）
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                    overlay.classList.add('hidden');
+                }
+            });
+        });
+
+        // Tab切换功能
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有tab的激活状态
+                tabBtns.forEach(b => b.classList.remove('tab-active'));
+                // 隐藏所有tab内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // 添加当前tab的激活状态
+                btn.classList.add('tab-active');
+                
+                // 显示对应tab内容
+                const tabId = btn.getAttribute('data-tab');
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
+
+        // 搜索功能
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+            
+            const engine = searchEngine.value;
+            let url = '';
+            
+            switch(engine) {
+                case 'baidu':
+                    url = `https://www.baidu.com/s?wd=${encodeURIComponent(query)}`;
+                    break;
+                case 'google':
+                    url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    break;
+                case 'bing':
+                    url = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+                    break;
+            }
+            
+            window.open(url, '_blank');
+        }
+
+        // 滚动监听（Scroll Spy）
+        const sections = document.querySelectorAll('section');
+        
+        function highlightNavLink() {
+            const scrollPosition = window.scrollY + 150;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${sectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightNavLink);
+        highlightNavLink(); // 初始化
+
+        // 平滑滚动到指定区域
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
